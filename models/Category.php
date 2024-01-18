@@ -42,7 +42,9 @@ class Category{
 
         $sth->bindValue(':name', $this->getName());
 
-        $sth->execute();
+        $result = $sth->execute();
+
+        return $result;        
 
     }
 
@@ -103,6 +105,7 @@ class Category{
             return false;
         }
     }
+            
     
 }
 

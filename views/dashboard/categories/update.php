@@ -5,5 +5,7 @@
     <form method="post" action="">
         <input type="text" name="name" placeholder="ex: Nouveau nom" value="<?= isset($categoryDetails->name) ? htmlspecialchars($categoryDetails->name) : '' ?>" required>
         <button type="submit" class="btn btn-primary">Enregistrer la modification</button>
+        <h4><?=$errors['name'] ?? ''?></h4>
+        <h4><?=$successes['name'] ?? ''?></h4>
     </form>
 </div>
