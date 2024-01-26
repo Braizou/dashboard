@@ -32,7 +32,6 @@ try {
         }
     }
 } catch (Throwable $e) {
-    // Affichez le message d'erreur complet pour un débogage approfondi
     echo "Erreur : " . $e->getMessage();
 }
 

@@ -77,47 +77,7 @@ try {
             }
         }
 
-        // $picture = NULL;
-        // if (!empty($_FILES['picture']['name'])) {
-        //     try {
-        //         if ($_FILES['picture']['error'] != 0) {
-        //             throw new Exception("Erreur lors du téléchargement du fichier.");
-        //         }
-        //         if (!in_array($_FILES['picture']['type'], ARRAY_TYPES)) {
-        //             throw new Exception("Format non autorisé");
-        //         }
-        //         if ($_FILES['picture']['size'] > UPLOAD_MAX_SIZE) {
-        //             throw new Exception("Image trop grande");
-        //         }
-        
-        //         $from = $_FILES['picture']['tmp_name'];
-        
-        //         if (!file_exists($from)) {
-        //             throw new Exception("Le fichier temporaire n'existe pas.");
-        //         }
-        
-        //         $fileName = uniqid('img_');
-        //         $extension = pathinfo($_FILES['picture']['name'], PATHINFO_EXTENSION);
-        
-        //         $to = __DIR__ . '/../../../public/uploads/vehicles/' . $fileName . '.' . $extension;
-        //         $picture = $fileName . '.' . $extension;
-        
-        //         $moveFile = move_uploaded_file($from, $to);
-        
-        //         if (!isset($moveFile) || !$moveFile) {
-        //             throw new Exception("Échec du déplacement du fichier.");
-        //         }
-        
-        //         // Supprimer le fichier temporaire après déplacement
-        //         unlink($from);
-        
-        //     } catch (\Throwable $e) {
-        //         $errors['picture'] = $e->getMessage();
-        //     }
-        // }
-
-        
-        
+       
         $id_category = filter_input(INPUT_POST, 'id_category', FILTER_VALIDATE_INT);
         if (empty($id_category)) {
             $errors['id_category'] = 'Vous devez sélèctionner un ID valable.';

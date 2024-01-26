@@ -45,7 +45,6 @@
                 <button type="submit" class="btn btn-primary">Ajouter</button>
                 <h4><?=$errors['add'] ?? ''?></h4>
                 <h4><?=$successes['add'] ?? ''?></h4>
-        
             </form>
         </div>
     </div>

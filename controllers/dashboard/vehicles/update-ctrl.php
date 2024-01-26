@@ -7,8 +7,7 @@ require_once __DIR__ . '/../../../models/Vehicle.php';
 try {
     $title = "Modifier Véhicule";
     // Récupérer l'ID du véhicule depuis les paramètres de l'URL
-    if (isset($_GET['id_vehicle'])) {
-        $vehicleId = $_GET['id_vehicle'];
+    $vehicleId = intval(filter_input(INPUT_GET, 'id_vehicle', FILTER_SANITIZE_NUMBER_INT)); 
 
         // Récupérer les détails du véhicule à partir de l'ID
         $vehicleDetails = Vehicle::get($vehicleId);
@@ -21,39 +20,85 @@ try {
 
         // Récupérer toutes les catégories
         $categories = Category::getAll();
-    } else {
-        // Gérer le cas où l'ID n'est pas spécifié dans l'URL
-        echo "L'ID du véhicule n'est pas spécifié.";
-        exit();
-    }
-
+    
     // Traitement du formulaire de modification si soumis
     if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+        $errors = [];
         // Récupérer les nouvelles valeurs du formulaire
-        $newBrand = filter_input(INPUT_POST, 'brand', FILTER_SANITIZE_SPECIAL_CHARS);
-        $newModel = filter_input(INPUT_POST, 'model', FILTER_SANITIZE_SPECIAL_CHARS);
-        $newRegistration = filter_input(INPUT_POST, 'registration', FILTER_SANITIZE_SPECIAL_CHARS);
-        $newMileage = filter_input(INPUT_POST, 'mileage', FILTER_SANITIZE_SPECIAL_CHARS);
-        $newPicture = filter_input(INPUT_POST, 'picture', FILTER_SANITIZE_SPECIAL_CHARS);
-        $newCategoryId = filter_input(INPUT_POST, 'id_category', FILTER_VALIDATE_INT);
-
-        // Récupérer le nom de fichier existant s'il n'y a pas de nouveau fichier téléchargé
-        $existingPicture = $vehicleDetails->picture;
-
-        // Vérifier s'il y a un nouveau fichier téléchargé
-        if (isset($_FILES['picture']['name']) && $_FILES['picture']['name'] !== '') {
-            // Un nouveau fichier a été téléchargé, utiliser le nouveau nom de fichier
-            $newPicture = $_FILES['picture']['name'];
-
-            // Ajouter le code pour gérer l'upload du fichier, par exemple :
-            // move_uploaded_file($_FILES['picture']['tmp_name'], 'chemin/vers/dossier/upload/' . $newPicture);
+        $brand = filter_input(INPUT_POST, 'brand', FILTER_SANITIZE_SPECIAL_CHARS); // nettoyage
+        if (empty($brand)) {
+            $errors['brand'] = 'Le champ ne peut pas être vide';
         } else {
-            // Aucun nouveau fichier téléchargé, conserver le nom de fichier existant
-            $newPicture = $existingPicture;
+            $isOk = filter_var($brand, FILTER_VALIDATE_REGEXP, array("options" => array("regexp" => '/' . REGEX_CATEGORY . '/')));
+            if (!$isOk) {
+                $errors['brand'] = 'La marque doit contenir 2 à 30 caractères alphabétiques et/ou numériques.';
+            }
+        }
+        $model = filter_input(INPUT_POST, 'model', FILTER_SANITIZE_SPECIAL_CHARS); // nettoyage
+        if (empty($model)) {
+            $errors['model'] = 'Le champ ne peut pas être vide';
+        } else {
+            $isOk = filter_var($model, FILTER_VALIDATE_REGEXP, array("options" => array("regexp" => '/' . REGEX_CATEGORY . '/')));
+            if (!$isOk) {
+                $errors['model'] = 'Le modèle doit contenir 1 à 30 caractères alphabétiques et/ou numériques.';
+            }
+        }
+        $registration = filter_input(INPUT_POST, 'registration', FILTER_SANITIZE_SPECIAL_CHARS); // nettoyage
+        if (empty($registration)) {
+            $error['registration'] = 'Le champ ne peut pas être vide';
+        } else {
+            $isOk = filter_var($registration, FILTER_VALIDATE_REGEXP, array("options" => array("regexp" => '/' . REGEX_REGISTRATION . '/')));
+            if (!$isOk) {
+                $error['registration'] = 'La plaque d\'immatriculation doit être de format AA-111-AA ou 1111-AA-11.';
+            }
+        }
+        $mileage = intval(filter_input(INPUT_POST, 'mileage', FILTER_SANITIZE_NUMBER_INT)); // nettoyage
+        if (empty($mileage)) {
+            $error['mileage'] = 'Le champ ne peut pas être vide';
+        } else {
+            $isOk = filter_var($mileage, FILTER_VALIDATE_REGEXP, array("options" => array("regexp" => '/' . REGEX_MILEAGE . '/')));
+            if (!$isOk || $isOk > 1500000) { // ne pas accepter un nombre de Kms > 1M5
+                $error['mileage'] = 'Le nombre de kilomètres est invalide.';
+            }
+        }
+        $id_category = intval(filter_input(INPUT_POST, 'id_category', FILTER_SANITIZE_NUMBER_INT));
+        if (empty($id_category)) {
+            $error['id_category'] = 'Le champ ne peut pas être vide.';
+        } else {
+            $categoriesId = array_column($categories, 'id_category'); // création d'un tableau contenant les ID pour vérifier qu'un ID entré par un utilisateur corresponde bien à l'un des ID qui existent dans notre BDD
+            $isOk = in_array($id_category, $categoriesId); // réponds true si l'id correspond bien à l'un de nos ID existant dans la BDD => pas besoin de filtre de validation
+            if (!$isOk) {
+                $error['id_category'] = 'Erreur, le choix est invalide.';
+            }
+        }
+
+        $picture = $vehicleDetails->picture;
+        if (!empty($_FILES['picture']['name'])) { // si l'utilisateur rentre une image dans le formulaire
+            try {
+                @unlink(__DIR__ . '/../../../public/uploads/vehicles/' . $picture); // supprime l'image du disque si on la modifie par une autre
+                if ($_FILES['picture']['error'] != 0) {
+                    throw new Exception("Une erreur est survenue lors du transfert.");
+                }
+                if (!in_array($_FILES['picture']['type'], ARRAY_TYPES)) {
+                    throw new Exception("Ce fichier n'est pas au bon format.");
+                }
+                if ($_FILES['picture']['size'] > UPLOAD_MAX_SIZE) {
+                    throw new Exception("Ce fichier est trop volumineux.");
+                }
+                // Upload de l'image sur le serveur dans le bon dossier
+                $from = $_FILES['picture']['tmp_name']; // chemin temporaire où a été déposée la photo
+                $extension = pathinfo($_FILES['picture']['name'], PATHINFO_EXTENSION); // pathinfo_exrtensions pour récupérer l'extension du fichier uniquement (et pas en plus de ça le MIME etc)
+                $picture = uniqid('img_') . '.' . $extension;
+                $to = __DIR__ . '/../../../public/uploads/vehicles/' . $picture;
+                move_uploaded_file($from, $to);
+                // $picture = $filename; // pour n'envoyer en BDD que le nom du fichier et pas le chemin (important sinon on reçoit NULL en BDD)
+            } catch (\Throwable $th) {
+                $error['picture'] = $th->getMessage();
+            }
         }
 
             // Mettre à jour le véhicule dans la base de données
-            $vehicleToUpdate = new Vehicle($newBrand, $newModel, $newRegistration, $newMileage, $newPicture, NULL, NULL, NULL, $vehicleId, $newCategoryId);
+            $vehicleToUpdate = new Vehicle($brand, $model, $registration, $mileage, $picture, NULL, NULL, NULL, $vehicleId, $id_category);
 
         $result = $vehicleToUpdate->update();
 

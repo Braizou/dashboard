@@ -150,30 +150,99 @@ class Vehicle{
     }
 
     // GETALL
-    public static function getAll(): array|false
-    {
-        $pdo = Database::connect();
+    public static function getAll(bool $paginate = false, int $limit = null, int $offset = null, int $categoryId = 0, string $search = NULL): array|false
+{
+    $pdo = Database::connect();
 
-        $sql = 'SELECT * FROM `vehicles` INNER JOIN `categories` ON `vehicles`.`id_category` = `categories`.`id_category`
-        ORDER BY `categories`.`name`;';
+    $sql = 'SELECT *
+            FROM `vehicles`
+            INNER JOIN `categories` ON `vehicles`.`id_category` = `categories`.`id_category`';
+    $sql .= ' WHERE 1 = 1 ';
 
-        $sth = $pdo->query($sql);
-
-        $result = $sth->fetchAll(PDO::FETCH_OBJ);
-
-        return $result;
+    if ($categoryId !== 0) {
+        $sql .= ' AND `categories`.`id_category` = :category_id';
     }
+
+    if ($search !== NULL) {
+        $sql .= ' AND (`brand` LIKE :search OR `model` LIKE :search)';
+    }
+
+    $sql .= ' ORDER BY `categories`.`name`';
+
+    if ($paginate) {
+        $sql .= ' LIMIT :limit OFFSET :offset';
+    }
+
+    $sth = $pdo->prepare($sql);
+
+    if ($categoryId !== 0) {
+        $sth->bindValue(':category_id', $categoryId, PDO::PARAM_INT);
+    }
+
+    if ($search !== NULL) {
+        $sth->bindvalue(':search', "%$search%", PDO::PARAM_STR);  
+    }
+
+    if ($paginate) {
+        $sth->bindValue(':limit', $limit, PDO::PARAM_INT);
+        $sth->bindValue(':offset', $offset, PDO::PARAM_INT);
+    }
+
+    $sth->execute();
+
+    $result = $sth->fetchAll(PDO::FETCH_OBJ);
+
+    return $result;
+}
+
+
+
+public static function countVehicle(int $categoryId = 0, string $search = NULL): int
+{
+    $pdo = Database::connect();
+
+    $sql = 'SELECT COUNT(*) AS count
+            FROM `vehicles`
+            INNER JOIN `categories` ON `vehicles`.`id_category` = `categories`.`id_category`';
+    $sql .= ' WHERE 1 = 1 ';
+
+    if ($categoryId !== 0) {
+        $sql .= ' AND `categories`.`id_category` = :category_id';
+    }
+
+    if ($search !== NULL) {
+        $sql .= ' AND (`brand` LIKE :search OR `model` LIKE :search)';
+    }
+
+    $sth = $pdo->prepare($sql);
+
+    if ($categoryId !== 0) {
+        $sth->bindValue(':category_id', $categoryId, PDO::PARAM_INT);
+    }
+
+    if ($search !== NULL) {
+        $sth->bindvalue(':search', "%$search%", PDO::PARAM_STR);  // Modifié : ajout de % pour utiliser LIKE correctement
+    }
+
+    $sth->execute();
+
+    $result = $sth->fetchColumn();
+
+    return $result;
+}
+
+    
 
     // GET
     // Récupère toutes les colonnes de la table 'vehicles' en fonction de l'id du véhicule
-    public static function get(int $id): object | false {
+    public static function get(int $vehicleId): object | false {
         $pdo = Database::connect();
         $sql = 'SELECT *
                 FROM `vehicles`
                 WHERE `id_vehicle` = :id_vehicle';
 
         $sth = $pdo->prepare($sql);
-        $sth->bindValue(':id_vehicle', $id, PDO::PARAM_INT);
+        $sth->bindValue(':id_vehicle', $vehicleId, PDO::PARAM_INT);
         $sth->execute();
         $result = $sth->fetch(PDO::FETCH_OBJ); // Va chercher la table et la retourne sous forme d'objet
         
@@ -181,7 +250,6 @@ class Vehicle{
     }
 
     // UPDATE
-    // Modifier le nom du véhicule selon l'ID passé en URL
     public function update() {
         // Connexion à la base de données
         $pdo = Database::connect();
@@ -214,17 +282,57 @@ class Vehicle{
         // Retour du résultat
         return $result;
     }
-    public function delete() {
-        $pdo = Database::connect();
-    
-        $sql = 'DELETE FROM vehicles WHERE id_vehicle = :id_vehicle';
-    
-        $sth = $pdo->prepare($sql);
-    
-        $sth->bindValue(':id_vehicle', $this->getIdVehicle());
-    
-        return $sth->execute();
-    }   
-    
 
+    public static function delete($vehicleId): bool
+    {
+        $pdo = Database::connect();
+        $sql = 'DELETE FROM `vehicles` WHERE `id_vehicle` = :id_vehicle;';
+        $sth = $pdo->prepare($sql);
+        $sth->bindValue(':id_vehicle', $vehicleId);
+        $sth->execute();
+        if ($sth->rowCount() <= 0) {
+            return false;
+        } else {
+            return true;
+        }
+    }
+    
+    public static function isExist(string $registration): bool
+    {
+        $pdo = Database::connect();
+
+        $sql = 'SELECT COUNT(`id_vehicle`) AS "count"
+        FROM `vehicles`
+        WHERE `registration` = :registration;'; // on compte le nbe de lignes identiques
+
+        $sth = $pdo->prepare($sql);
+
+        $sth->bindValue(':registration', $registration);
+
+        $result = $sth->execute(); // retourne true ou false sur la bonne exécution de la requête
+
+        $result = $sth->fetchColumn(); // on récupère la valeur retournée par le COUNT (si on obtient 0 c'est false sinon c'est true)
+
+        return (bool) $result > 0; // donc retourne true si c'est supérieur à 0
+    }
+
+    public static function getByCategory(int $categoryId): array|false {
+        $pdo = Database::connect();
+
+        $sql = 'SELECT *
+                FROM `vehicles`
+                INNER JOIN `categories` ON `vehicles`.`id_category` = `categories`.`id_category`
+                WHERE `categories`.`id_category` = :category_id
+                ORDER BY `categories`.`name`';
+
+        $sth = $pdo->prepare($sql);
+        $sth->bindValue(':category_id', $categoryId, PDO::PARAM_INT);
+        $sth->execute();
+
+        $result = $sth->fetchAll(PDO::FETCH_OBJ);
+
+        return $result;
+    }   
+
+    
 }

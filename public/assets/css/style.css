@@ -1,0 +1,66 @@
+body {
+    font-family: 'Montserrat', sans-serif;
+}
+.listImg{
+    width: 50%;
+    border-radius: 5%;
+}
+
+.logo{
+    width: 50%;
+}
+
+.hero-banner{
+    height: 500px;
+    width: 100%;
+    object-fit: cover;
+    border-radius: 10px;
+    background-size:cover;
+    background-position: center;
+    background-image: url(/public/assets/img/acceuil.jpg);
+} 
+
+.hero-banner .filter{
+    height: 100%;
+    border-radius: 10px;
+    background-color: #00000023;
+    padding: 0 70px;
+    display: flex;
+    align-items: center;
+} 
+
+.hero-banner h1{
+    color: #FFF !important;
+    font-size: 6rem;
+    line-height:6rem;
+    text-shadow: 1px 2px 3px #00000050, 0 0 1rem #00000050, 0 0 1em #00000050;
+
+}
+
+.category {
+    height: 19.7rem;
+    font-size: 14.5rem;
+    letter-spacing: .25rem  ;
+    text-transform: uppercase;
+    font-weight: 700;
+    font-family: 'Open Sans', sans-serif;
+    text-align: center;
+    margin: 0;
+}
+
+.vehiclePicture{
+    width: 50%;
+    margin-top: -200px;
+}
+
+.title{
+    margin-top: -100px;
+    margin-right: 50px;
+    font-weight: 700;
+    line-height:6rem;
+
+}
+
+.rent{
+    background-color: rgba(255, 255, 255, 0.851);
+}

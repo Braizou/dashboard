@@ -1,5 +1,6 @@
 <?php
 require_once __DIR__ . '/../../dashboard/config/init.php';
+require_once __DIR__ . '/../helpers/Database.php';
 
 class Category{
     // ATTRIBUTS
@@ -31,7 +32,7 @@ class Category{
     }
 
     public function insert(){
-        $pdo = new PDO(DSN, USER, PASSWORD);
+        $pdo = Database::connect();
 
         $sql = 'INSERT INTO
         categories(name)
@@ -50,7 +51,7 @@ class Category{
 
     public static function getAll() {
         
-            $pdo = new PDO(DSN, USER, PASSWORD);
+            $pdo = Database::connect();
 
             $sql = 'SELECT id_category, name FROM categories';
 
@@ -64,7 +65,7 @@ class Category{
 
     public function update() {
 
-        $pdo = new PDO(DSN, USER, PASSWORD);
+        $pdo = Database::connect();
 
         $sql = 'UPDATE categories SET name = :name WHERE id_category = :id';
 
@@ -77,7 +78,7 @@ class Category{
     }
 
     public static function getById($id) {
-        $pdo = new PDO(DSN, USER, PASSWORD);
+        $pdo = Database::connect();
         $sql = 'SELECT * FROM `categories` WHERE `id_category` = :id';
         $sth = $pdo->prepare($sql);
         $sth->bindValue(':id', $id, PDO::PARAM_INT);    
@@ -88,21 +89,18 @@ class Category{
 
     }
 
-    public function delete() {
-        try {
-            $pdo = new PDO(DSN, USER, PASSWORD);
-    
-            $sql = 'DELETE FROM categories WHERE id_category = :id';
-    
-            $sth = $pdo->prepare($sql);
-    
-            $sth->bindValue(':id', $this->getIdCategory());
-    
-            return $sth->execute();
-        } catch (PDOException $e) {
-            // Gérer les erreurs PDO si nécessaire
-            echo "Erreur PDO : " . $e->getMessage();
+
+    public static function delete($categoryId): bool
+    {
+        $pdo = Database::connect();
+        $sql = 'DELETE FROM `categories` WHERE `id_category` = :id;';
+        $sth = $pdo->prepare($sql);
+        $sth->bindValue(':id', $categoryId);
+        $sth->execute();
+        if ($sth->rowCount() <= 0) {
             return false;
+        } else {
+            return true;
         }
     }
             

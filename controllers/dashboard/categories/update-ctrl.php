@@ -8,8 +8,7 @@ try {
     $title = "Modifier Catégorie";
     
     // Récupérer l'ID de la catégorie depuis les paramètres de l'URL
-    if (isset($_GET['id'])) {
-        $categoryId = $_GET['id'];
+    $categoryId = intval(filter_input(INPUT_GET, 'id', FILTER_SANITIZE_NUMBER_INT));
 
         // Récupérer les détails de la catégorie à partir de l'ID
         $categoryDetails = Category::getById($categoryId);
@@ -19,12 +18,7 @@ try {
             $errors['name'] = "La catégorie avec l'ID spécifié n'existe pas.";
             
         }
-    } else {
-        // Gérer le cas où l'ID n'est pas spécifié dans l'URL
-        $errors['name'] = "L'ID de la catégorie n'est pas spécifié.";
-        
-    }
-
+    
     // Traitement du formulaire de modification si soumis
     if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $errors = [];

@@ -5,21 +5,16 @@ require_once __DIR__ . '/../../../models/Category.php';
 
 
 try {
-    if (isset($_GET['id'])) {
-        $categoryId = $_GET['id'];
+     $categoryId = intval(filter_input(INPUT_GET, 'id', FILTER_SANITIZE_NUMBER_INT));
 
-        $categoryToDelete = new Category('', $categoryId);
-        $result = $categoryToDelete->delete();
-
-        if ($result !== false) {
-            header('Location: /controllers/dashboard/categories/list-ctrl.php');
-            exit();
-        } else {
-            echo "La suppression de la catégorie a échoué.";
-        }
-    } else {
-        echo "L'ID de la catégorie n'est pas spécifié.";
-    }
+    //  Category::getById($categoryId);
+ 
+     $isOk = Category::delete($categoryId);
+ 
+     if ($isOk) {
+         header('location: /controllers/dashboard/categories/list-ctrl.php');
+         die;
+     }
 } catch (Throwable $e) {
     echo "Erreur : " . $e->getMessage();
 }

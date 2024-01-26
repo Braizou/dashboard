@@ -7,6 +7,7 @@ try {
     $title = "Liste des véhicules";
     $vehicles = Vehicle::getAll();
     $categories = Category::getAll();
+    $total_vehicles = Vehicle::countVehicle(); 
 
 } catch (Throwable $e) {
     echo "Erreur : " . $e->getMessage();
